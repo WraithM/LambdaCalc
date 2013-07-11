@@ -8,6 +8,8 @@ data Op
     | Cat
     deriving (Show, Eq)
 
+data Assign = Assign String Exp
+
 data Exp
     = Id String
     | IntConst Int

@@ -12,3 +12,5 @@ modules:
     filename: src/Eval.hs
   Ast:
     filename: src/Ast.hs
+  Parser:
+    filename: src/Parser.hs
