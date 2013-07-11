@@ -4,6 +4,7 @@ import Text.Parsec.String (parseFromFile)
 
 import Parser
 import Eval
+import Ast
 
 parseFile :: FilePath -> IO [Message]
 parseFile filename = do
