@@ -63,6 +63,7 @@ parseStrConst = do
     char '"'
     return (StrConst str)
     
+parseLambda :: Parser Exp
 parseLambda = do
     lambda
     whitespace
@@ -73,6 +74,7 @@ parseLambda = do
     e <- parseExp
     return (Abs x e)
 
+parseApp :: Parser Exp
 parseApp = do
     l <- parseLambda
     whitespace
