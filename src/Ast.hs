@@ -1,22 +1,19 @@
 module Ast where
 
-data Consts
-    = Int
-    | String
-    | Float
-    | Char
-
 data Op
     = Add
-    | Mult
+    | Mul
     | Sub
     | Div
-    | Concat
+    | Cat
+    deriving (Show, Eq)
 
 data Exp
     = Id String
-    | Const Consts
+    | IntConst Int
+    | StrConst String
     | Abs String Exp
     | Parens Exp
     | App Exp Exp
     | BinOp Op Exp Exp
+    deriving (Show, Eq)

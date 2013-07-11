@@ -8,5 +8,7 @@ modules:
   Main(src/Main.hs):
     target-type: console
     filename: src/Main.hs
+  Eval:
+    filename: src/Eval.hs
   Ast:
     filename: src/Ast.hs
