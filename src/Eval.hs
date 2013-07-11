@@ -59,11 +59,9 @@ getIds _ = []
 evalMain :: [Assign] -> Exp
 evalMain as = eval mainWithSubs
   where
-    mainExp = case lookup "main" as of
-        Just m -> m
-        Nothing -> error "Cannot find main"
     lookupId name = case lookup name as of
         Just e -> e
         Nothing -> Id name
+    mainExp = lookupId "main"
     idsInMain = getIds mainExp
     mainWithSubs = foldl (\e n -> substitute (lookupId n) n e) mainExp idsInMain
