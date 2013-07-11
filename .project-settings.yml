@@ -9,8 +9,11 @@ modules:
     target-type: console
     filename: src/Main.hs
   Eval:
+    target-type: console
     filename: src/Eval.hs
   Ast:
+    target-type: console
     filename: src/Ast.hs
   Parser:
+    target-type: console
     filename: src/Parser.hs

@@ -1,6 +1,5 @@
 module Main where
 
-fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+import Parser
+import Eval
 
-main :: IO ()
-main = putStrLn $ show fibs

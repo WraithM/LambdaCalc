@@ -45,3 +45,25 @@ substitute arg x (Abs y e)
 substitute arg x (App e1 e2) = App (substitute arg x e1) (substitute arg x e2)
 substitute arg x (Parens e) = Parens (substitute arg x e)
 substitute _ _ e = e
+
+getIds :: Exp -> [String]
+getIds (BinOp _ e1 e2) = getIds e1 ++ getIds e2
+getIds (Id x) = x
+getIds (IntConst _) = []
+getIds (StrConst _) = []
+getIds (Abs x e) = getIds e
+getIds (App e1 e2) = getIds e1 ++ getIds e2
+getIds (Parens e) = getIds e
+getIds _ = []
+
+evalMain :: [Assign] -> Exp
+evalMain as = eval mainWithSubs
+  where
+    mainExp = case lookup "main" as of
+        Just m -> m
+        Nothing -> error "Cannot find main"
+    lookupId name = case lookup name as of
+        Just e -> e
+        Nothing -> Id name
+    idsInMain = getIds mainExp
+    mainWithSubs = foldl (\e n -> substitute (lookupId n) n e) mainExp idsInMain

@@ -1,5 +1,6 @@
 module Parser where
 
+import qualified Data.HashMap.Strict as H
 import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.Combinator
@@ -85,9 +86,11 @@ parseAssign = do
     equals
     whitespace
     e <- parseExp
-    endlines
-    return (Assign name e)
-
+    return (name, e)
+    
+parseAssignments :: Parser [Assign]
+parseAssignments = endBy parseAssign newline
+    
 parseExp :: Parser Exp
 parseExp = parseId
     <|> parseLambda
