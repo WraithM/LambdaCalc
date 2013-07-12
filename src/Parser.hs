@@ -1,6 +1,5 @@
 module Parser where
 
-import qualified Data.HashMap.Strict as H
 import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.Combinator
@@ -59,11 +58,11 @@ parseOp :: Parser Exp
 parseOp = do
     e1 <- parseExp
     whitespace
-    op <- operator
+    opName <- operator
     whitespace
     e2 <- parseExp
-    case lookup op opDict of
-        Just r -> return $ BinOp r e1 e2
+    case lookup opName opDict of
+        Just op -> return $ BinOp op e1 e2
         Nothing -> error "Cannot parse BinOp"
     <?> "binop"
 
@@ -76,7 +75,9 @@ parseStrConst = do
 parseLambda :: Parser Exp
 parseLambda = do
     lambda
+    whitespace
     x <- identifier
+    whitespace
     dot
     whitespace
     e <- parseExp
@@ -94,7 +95,9 @@ parseApp = do
 parseAssign :: Parser Assign
 parseAssign = do
     name <- identifier
+    whitespace
     equals
+    whitespace
     e <- parseExp
     return (name, e)
     <?> "assignment"
@@ -104,10 +107,10 @@ parseAssignments = endBy parseAssign newline <?> "assignments"
     
 parseExp :: Parser Exp
 parseExp = parseLambda
+    <|> parens (parseExp) 
     <|> parseApp
     <|> parseInt
     <|> parseStrConst
-    <|> parens (parseExp) 
     <|> parseOp
     <|> parseExpId
     <?> "exp"
