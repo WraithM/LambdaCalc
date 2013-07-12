@@ -5,28 +5,45 @@ import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.Combinator
 import Text.Parsec.String (Parser)
+import Text.Parsec.Language (emptyDef)
+import qualified Text.Parsec.Token as T
 
 import Ast
 
--- Lexical values
-lambda    = char '\\':: Parser Char
-dot       = char '.' :: Parser Char
-equals    = char '=' :: Parser Char
-whiteChar = tab <|> space :: Parser Char
+lambdaDef = emptyDef
+    { commentStart   = "{-"
+    , commentEnd     = "-}"
+    , commentLine    = "--"
+    , nestedComments = True
+    , identStart     = letter
+    , identLeter     = alphaNum <|> oneOf "_'"
+    , opStart        = opLetter lambdaDef
+    , opLetter       = oneOf "=+*-/@"
+    , reservedNames  = ["\\","="]
+    }
 
--- Parsers
-endlines :: Parser ()
-endlines = many1 newline >>= optional
+lexer = T.makeTokenParser lambdaDef
 
-whitespace :: Parser ()
-whitespace = many1 whiteChar >>= optional
+parens     = T.parens lexer
+identifier = T.identifier lexer
+reserved   = T.reserved lexer
+integer    = T.integer lexer
+strLiteral = T.stringLiteral lexer
+operater   = T.operator lexer
+whitespace = T.whiteSpace lexer
+dot        = T.dot lexer
 
-parseId :: Parser String
-parseId = return (alpha >>= many1 alphaNum)
+lambda = reserved "\\"
+equal  = reserved "="
+
+parseExpId :: Parser Exp
+parseExpId = do
+    x <- identifier
+    return (Id x)
 
 parseInt :: Parser Exp
 parseInt = do
-    s <- many1 digit
+    s <- integer
     return $ IntConst (read s)
 
 opDict :: [(Char, Op)]
@@ -42,37 +59,29 @@ parseOp :: Parser Exp
 parseOp = do
     e1 <- parseExp
     whitespace
-    c <- oneOf "+*-/@"
+    op <- operator
     whitespace
     e2 <- parseExp
-    case lookup c opDict of
-        Just op -> return $ BinOp op e1 e2
+    case lookup op opDict of
+        Just r -> return $ BinOp r e1 e2
         Nothing -> error "Cannot parse BinOp"
+    <?> "binop"
 
-parseParens :: Parser Exp
-parseParens = do
-    char '('
-    e <- parseExp
-    char ')'
-    return e
-
-parseStrConst :: Parser String
+parseStrConst :: Parser Exp
 parseStrConst = do
-    char '"'
-    str <- many1 anyChar
-    char '"'
+    str <- strLiteral
     return (StrConst str)
+    <?> "strconst"
     
 parseLambda :: Parser Exp
 parseLambda = do
     lambda
-    whitespace
-    x <- parseId
-    whitespace
+    x <- identifier
     dot
     whitespace
     e <- parseExp
     return (Abs x e)
+    <?> "lambda"
 
 parseApp :: Parser Exp
 parseApp = do
@@ -80,24 +89,25 @@ parseApp = do
     whitespace
     a <- parseExp
     return (App l a)
+    <?> "application"
 
 parseAssign :: Parser Assign
 parseAssign = do
-    name <- parseId
-    whitespace
+    name <- identifier
     equals
-    whitespace
     e <- parseExp
     return (name, e)
+    <?> "assignment"
     
 parseAssignments :: Parser [Assign]
-parseAssignments = endBy parseAssign newline
+parseAssignments = endBy parseAssign newline <?> "assignments"
     
 parseExp :: Parser Exp
-parseExp = parseId
-    <|> parseLambda
+parseExp = parseLambda
+    <|> parseApp
     <|> parseInt
     <|> parseStrConst
-    <|> parseParens
-    <|> parseApp
+    <|> parens (parseExp) 
     <|> parseOp
+    <|> parseExpId
+    <?> "exp"

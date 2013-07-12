@@ -1,11 +1,13 @@
 module Main where
 
+import Control.Monad (forM_)
 import Text.Parsec.String (parseFromFile)
 
 import Parser
 import Eval
+import Ast
 
-parseFile :: FilePath -> IO [Message]
+parseFile :: FilePath -> IO [Assign]
 parseFile filename = do
     result <- parseFromFile parseAssignments filename
     case result of

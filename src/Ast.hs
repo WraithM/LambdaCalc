@@ -8,7 +8,7 @@ data Op
     | Cat
     deriving (Show, Eq)
 
-type Assign = (String, Exp) deriving (Show, Eq)
+type Assign = (String, Exp)
 
 data Exp
     = Id String
