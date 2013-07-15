@@ -106,8 +106,8 @@ parseAssignments :: Parser [Assign]
 parseAssignments = endBy parseAssign newline <?> "assignments"
     
 parseExp :: Parser Exp
-parseExp = parseLambda
-    <|> parens parseExp
+parseExp = parens parseExp
+    <|> parseLambda
     <|> parseApp
     <|> parseInt
     <|> parseStrConst

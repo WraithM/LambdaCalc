@@ -1,5 +1,6 @@
 module Ast where
 
+-- | Binary operators
 data Op
     = Add
     | Mul
@@ -8,8 +9,10 @@ data Op
     | Cat
     deriving (Show, Eq)
 
+-- | An assignment between a name and an expression
 type Assign = (String, Exp)
 
+-- | Our expression grammar
 data Exp
     = Id String
     | IntConst Integer

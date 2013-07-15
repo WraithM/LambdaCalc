@@ -4,6 +4,7 @@ import Data.Maybe (fromMaybe)
 
 import Ast
 
+-- | Apply a binary operation after evaluating two expressions
 applyOp :: Op -> Exp -> Exp -> Exp
 applyOp Add e1 e2 = IntConst (i1 + i2)
   where
@@ -28,6 +29,7 @@ applyOp Cat e1 e2 = StrConst (s1 ++ s2)
     StrConst s1 = eval e1
     StrConst s2 = eval e2
 
+-- | Evaluate an expression via substitution
 eval :: Exp -> Exp
 eval (BinOp op e1 e2) = applyOp op e1 e2
 eval (Id x) = Id x
@@ -38,6 +40,7 @@ eval (App (Abs x e) arg) = eval (substitute arg x e)
 eval (Parens e) = eval e
 eval e = error ("Eval: Cannot eval " ++ show e)
 
+-- | Substitute an expression for a variable name in an expression
 substitute :: Exp -> String -> Exp -> Exp
 substitute arg x (BinOp op e1 e2) = BinOp op (substitute arg x e1) (substitute arg x e2)
 substitute arg x (Id y) = if x == y then arg else Id y
@@ -48,6 +51,7 @@ substitute arg x (App e1 e2) = App (substitute arg x e1) (substitute arg x e2)
 substitute arg x (Parens e) = Parens (substitute arg x e)
 substitute _ _ e = e
 
+-- | Get a list of variable names in an expression. I should get only free variables.
 getIds :: Exp -> [String]
 getIds (Id x) = [x]
 getIds (BinOp _ e1 e2) = getIds e1 ++ getIds e2
@@ -57,6 +61,7 @@ getIds (Abs _ e) = getIds e
 getIds (App e1 e2) = getIds e1 ++ getIds e2
 getIds (Parens e) = getIds e
 
+-- | Given a set of assignments, evaluate the expression named "main"
 evalMain :: [Assign] -> Exp
 evalMain as = eval mainWithSubs
   where

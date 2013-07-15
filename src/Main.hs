@@ -7,6 +7,7 @@ import Parser
 import Eval
 import Ast
 
+-- | Parse a file with assignments at the top-level
 parseFile :: FilePath -> IO [Assign]
 parseFile filename = do
     result <- parseFromFile parseAssignments filename
