@@ -12,7 +12,7 @@ type Assign = (String, Exp)
 
 data Exp
     = Id String
-    | IntConst Int
+    | IntConst Integer
     | StrConst String
     | Abs String Exp
     | Parens Exp

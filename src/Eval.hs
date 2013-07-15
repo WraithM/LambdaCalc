@@ -1,5 +1,7 @@
 module Eval where
 
+import Data.Maybe (fromMaybe)
+
 import Ast
 
 applyOp :: Op -> Exp -> Exp -> Exp
@@ -58,9 +60,7 @@ getIds (Parens e) = getIds e
 evalMain :: [Assign] -> Exp
 evalMain as = eval mainWithSubs
   where
-    lookupId name = case lookup name as of
-        Just e -> e
-        Nothing -> Id name
+    lookupId name = fromMaybe (Id name) (lookup name as)
     mainExp = lookupId "main"
     idsInMain = getIds mainExp
     mainWithSubs = foldl (\e n -> substitute (lookupId n) n e) mainExp idsInMain

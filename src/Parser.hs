@@ -10,15 +10,15 @@ import qualified Text.Parsec.Token as T
 import Ast
 
 lambdaDef = emptyDef
-    { commentStart   = "{-"
-    , commentEnd     = "-}"
-    , commentLine    = "--"
-    , nestedComments = True
-    , identStart     = letter
-    , identLeter     = alphaNum <|> oneOf "_'"
-    , opStart        = opLetter lambdaDef
-    , opLetter       = oneOf "=+*-/@"
-    , reservedNames  = ["\\","="]
+    { T.commentStart    = "{-"
+    , T.commentEnd      = "-}"
+    , T.commentLine     = "--"
+    , T.nestedComments  = True
+    , T.identStart      = letter
+    , T.identLetter     = alphaNum <|> oneOf "_'"
+    , T.opStart         = T.opLetter lambdaDef
+    , T.opLetter        = oneOf "=+*-/@"
+    , T.reservedNames   = ["\\","="]
     }
 
 lexer = T.makeTokenParser lambdaDef
@@ -28,12 +28,12 @@ identifier = T.identifier lexer
 reserved   = T.reserved lexer
 integer    = T.integer lexer
 strLiteral = T.stringLiteral lexer
-operater   = T.operator lexer
+operator   = T.operator lexer
 whitespace = T.whiteSpace lexer
 dot        = T.dot lexer
 
 lambda = reserved "\\"
-equal  = reserved "="
+equals = reserved "="
 
 parseExpId :: Parser Exp
 parseExpId = do
@@ -42,8 +42,8 @@ parseExpId = do
 
 parseInt :: Parser Exp
 parseInt = do
-    s <- integer
-    return $ IntConst (read s)
+    i <- integer
+    return $ IntConst i
 
 opDict :: [(Char, Op)]
 opDict =
@@ -107,7 +107,7 @@ parseAssignments = endBy parseAssign newline <?> "assignments"
     
 parseExp :: Parser Exp
 parseExp = parseLambda
-    <|> parens (parseExp) 
+    <|> parens parseExp
     <|> parseApp
     <|> parseInt
     <|> parseStrConst
