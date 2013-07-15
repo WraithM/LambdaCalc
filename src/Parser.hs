@@ -45,13 +45,13 @@ parseInt = do
     i <- integer
     return $ IntConst i
 
-opDict :: [(Char, Op)]
+opDict :: [(String, Op)]
 opDict =
-    [ ('+', Add)
-    , ('*', Mul)
-    , ('-', Sub)
-    , ('/', Div)
-    , ('@', Cat)
+    [ ("+", Add)
+    , ("*", Mul)
+    , ("-", Sub)
+    , ("/", Div)
+    , ("@", Cat)
     ]
     
 parseOp :: Parser Exp
