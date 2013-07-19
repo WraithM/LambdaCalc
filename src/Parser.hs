@@ -1,5 +1,8 @@
 module Parser where
 
+import Data.List (foldl')
+import Control.Applicative ((<$>),(<*>))
+
 import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.Combinator
@@ -17,8 +20,7 @@ lambdaDef = emptyDef
     , T.identStart      = letter
     , T.identLetter     = alphaNum <|> oneOf "_'"
     , T.opStart         = T.opLetter lambdaDef
-    , T.opLetter        = oneOf "=+*-/@"
-    , T.reservedNames   = ["\\","="]
+    , T.opLetter        = oneOf "=+*-/@\\"
     }
 
 lexer = T.makeTokenParser lambdaDef
@@ -29,16 +31,17 @@ reserved   = T.reserved lexer
 integer    = T.integer lexer
 strLiteral = T.stringLiteral lexer
 operator   = T.operator lexer
+reservedOp = T.reservedOp lexer
 whitespace = T.whiteSpace lexer
 dot        = T.dot lexer
 
-lambda = reserved "\\"
-equals = reserved "="
+lambda = reservedOp "\\"
+equals = reservedOp "="
 
-parseExpId :: Parser Exp
-parseExpId = do
+parseVar :: Parser Exp
+parseVar = do
     x <- identifier
-    return (Id x)
+    return (Var x)
 
 parseInt :: Parser Exp
 parseInt = do
@@ -57,9 +60,7 @@ opDict =
 parseOp :: Parser Exp
 parseOp = do
     e1 <- parseExp
-    whitespace
     opName <- operator
-    whitespace
     e2 <- parseExp
     case lookup opName opDict of
         Just op -> return $ BinOp op e1 e2
@@ -72,45 +73,55 @@ parseStrConst = do
     return (StrConst str)
     <?> "strconst"
     
+-- Problem exists here: spaceSep includes \n as a space
+spaceSep :: Parser a -> Parser [a]
+spaceSep p = (:) <$> p <*> many (try (spaces' >> p))
+  where 
+    spaces' = skipMany (skipMany1 (satisfy isSpace))
+    isSpace c = c == ' ' || c == '\t'
+
+makeLambda :: [String] -> Exp -> Exp
+makeLambda xs e = go (reverse xs) e
+  where
+    go [] e = e
+    go (x:xs) e = go xs $ Abs x e
+
 parseLambda :: Parser Exp
 parseLambda = do
     lambda
-    whitespace
-    x <- identifier
-    whitespace
+    xs <- spaceSep identifier
     dot
-    whitespace
     e <- parseExp
-    return (Abs x e)
+    return $ makeLambda xs e
     <?> "lambda"
-
+    
 parseApp :: Parser Exp
 parseApp = do
-    l <- parseLambda
-    whitespace
-    a <- parseExp
-    return (App l a)
+    tlist <- spaceSep term
+    return $ case tlist of
+        [t] -> t
+        t:ts -> foldl' (\f x -> App f x) t ts
     <?> "application"
+  where
+    term = choice [ parseInt, parseStrConst ] <|> (parseVar <|> parseLambda <|> parens term)
 
 parseAssign :: Parser Assign
 parseAssign = do
     name <- identifier
     whitespace
-    equals
-    whitespace
-    e <- parseExp
+    e <- equals >> whitespace >> parseExp
     return (name, e)
     <?> "assignment"
     
 parseAssignments :: Parser [Assign]
-parseAssignments = endBy parseAssign newline <?> "assignments"
+parseAssignments = parseAssign `sepEndBy` whitespace
     
 parseExp :: Parser Exp
-parseExp = parens parseExp
-    <|> parseLambda
-    <|> parseApp
+parseExp = try parseApp
+    <|> try parseLambda
+    <|> try (parens parseExp)
+    <|> parseOp
+    <|> parseVar
     <|> parseInt
     <|> parseStrConst
-    <|> parseOp
-    <|> parseExpId
     <?> "exp"

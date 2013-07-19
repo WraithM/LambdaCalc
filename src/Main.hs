@@ -1,6 +1,10 @@
 module Main where
 
+import System.Environment (getArgs)
 import Control.Monad (forM_)
+
+import Text.Parsec (parse, newline)
+import Text.Parsec.Combinator
 import Text.Parsec.String (parseFromFile)
 
 import Parser
@@ -17,8 +21,12 @@ parseFile filename = do
             return []
         Right as -> return as
 
+getFirstArg :: IO String
+getFirstArg = do
+    args <- getArgs
+    case args of
+        [] -> error "No first argument."
+        x:_ -> return x
+
 main :: IO ()
-main = do
-    as <- parseFile "test.l"
-    forM_ as $ \a ->
-        print a
+main = getFirstArg >>= parseFile >>= mapM_ print
