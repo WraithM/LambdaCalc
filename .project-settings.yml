@@ -4,13 +4,4 @@ version: 1
 module-template: ! 'module MODULE_NAME where
 
 '
-modules:
-  Main(src/Main.hs):
-    target-type: console
-    filename: src/Main.hs
-  Eval:
-    filename: src/Eval.hs
-  Ast:
-    filename: src/Ast.hs
-  Parser:
-    filename: src/Parser.hs
+modules: {}
