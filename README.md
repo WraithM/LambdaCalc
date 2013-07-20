@@ -1,4 +1,4 @@
-fpcompletetest
+LambdaCalc
 ==============
 
 A test repo for my FPComplete Haskell Center IDE.
