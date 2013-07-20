@@ -1,15 +1,14 @@
 module Main where
 
 import System.Environment (getArgs)
-import Control.Monad (forM_)
 
 import Text.Parsec (parse, newline)
 import Text.Parsec.Combinator
 import Text.Parsec.String (parseFromFile)
 
-import Parser
-import Eval
 import Ast
+import Eval
+import Parser
 
 -- | Parse a file with assignments at the top-level
 parseFile :: FilePath -> IO [Assign]

@@ -76,15 +76,11 @@ parseStrConst = do
 -- Problem exists here: spaceSep includes \n as a space
 spaceSep :: Parser a -> Parser [a]
 spaceSep p = (:) <$> p <*> many (try (spaces' >> p))
-  where 
-    spaces' = skipMany (skipMany1 (satisfy isSpace))
-    isSpace c = c == ' ' || c == '\t'
+  where spaces' = skipMany (skipMany1 (satisfy isSpace))
+        isSpace c = c == ' ' || c == '\t'
 
 makeLambda :: [String] -> Exp -> Exp
-makeLambda xs e = go (reverse xs) e
-  where
-    go [] e = e
-    go (x:xs) e = go xs $ Abs x e
+makeLambda xs e = foldl' (flip Abs) e (reverse xs)
 
 parseLambda :: Parser Exp
 parseLambda = do
@@ -100,7 +96,7 @@ parseApp = do
     tlist <- spaceSep term
     return $ case tlist of
         [t] -> t
-        t:ts -> foldl' (\f x -> App f x) t ts
+        t:ts -> foldl' App t ts
     <?> "application"
   where
     term = choice [ parseInt, parseStrConst ] <|> (parseVar <|> parseLambda <|> parens term)
@@ -109,7 +105,9 @@ parseAssign :: Parser Assign
 parseAssign = do
     name <- identifier
     whitespace
-    e <- equals >> whitespace >> parseExp
+    equals
+    whitespace
+    e <- parseExp
     return (name, e)
     <?> "assignment"
     
