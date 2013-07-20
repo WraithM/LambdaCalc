@@ -32,7 +32,7 @@ applyOp Cat e1 e2 = StrConst (s1 ++ s2)
 -- | Evaluate an expression via substitution
 eval :: Exp -> Exp
 eval (BinOp op e1 e2) = applyOp op e1 e2
-eval (Id x) = Id x
+eval (Var x) = Var x
 eval (IntConst i) = IntConst i
 eval (StrConst s) = StrConst s
 eval (Abs x e) = Abs x e
@@ -43,7 +43,7 @@ eval e = error ("Eval: Cannot eval " ++ show e)
 -- | Substitute an expression for a variable name in an expression
 substitute :: Exp -> String -> Exp -> Exp
 substitute arg x (BinOp op e1 e2) = BinOp op (substitute arg x e1) (substitute arg x e2)
-substitute arg x (Id y) = if x == y then arg else Id y
+substitute arg x (Var y) = if x == y then arg else Var y
 substitute arg x (Abs y e)
     | x == y = error $ "Cannot substitute: " ++ show x ++ " to " ++ show y
     | otherwise = Abs y (substitute arg x e)
@@ -52,20 +52,20 @@ substitute arg x (Parens e) = Parens (substitute arg x e)
 substitute _ _ e = e
 
 -- | Get a list of variable names in an expression. I should get only free variables.
-getIds :: Exp -> [String]
-getIds (Id x) = [x]
-getIds (BinOp _ e1 e2) = getIds e1 ++ getIds e2
-getIds (IntConst _) = []
-getIds (StrConst _) = []
-getIds (Abs _ e) = getIds e
-getIds (App e1 e2) = getIds e1 ++ getIds e2
-getIds (Parens e) = getIds e
+getVars :: Exp -> [String]
+getVars (Var x) = [x]
+getVars (BinOp _ e1 e2) = getVars e1 ++ getVars e2
+getVars (IntConst _) = []
+getVars (StrConst _) = []
+getVars (Abs _ e) = getVars e
+getVars (App e1 e2) = getVars e1 ++ getVars e2
+getVars (Parens e) = getVars e
 
 -- | Given a set of assignments, evaluate the expression named "main"
 evalMain :: [Assign] -> Exp
 evalMain as = eval mainWithSubs
   where
-    lookupId name = fromMaybe (Id name) (lookup name as)
+    lookupId name = fromMaybe (Var name) (lookup name as)
     mainExp = lookupId "main"
-    idsInMain = getIds mainExp
-    mainWithSubs = foldl (\e n -> substitute (lookupId n) n e) mainExp idsInMain
+    varsInMain = getVars mainExp
+    mainWithSubs = foldl (\e n -> substitute (lookupId n) n e) mainExp varsInMain
