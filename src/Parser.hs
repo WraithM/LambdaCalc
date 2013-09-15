@@ -57,6 +57,7 @@ opDict =
     , ("@", Cat)
     ]
     
+-- Still having some trouble
 parseOp :: Parser Exp
 parseOp = do
     e1 <- parseExp
