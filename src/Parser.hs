@@ -39,14 +39,10 @@ lambda = reservedOp "\\"
 equals = reservedOp "="
 
 parseVar :: Parser Exp
-parseVar = do
-    x <- identifier
-    return (Var x)
+parseVar = Var <$> identifier
 
 parseInt :: Parser Exp
-parseInt = do
-    i <- integer
-    return $ IntConst i
+parseInt = IntConst <$> integer
 
 opDict :: [(String, Op)]
 opDict =
@@ -119,8 +115,8 @@ parseExp :: Parser Exp
 parseExp = try parseApp
     <|> try parseLambda
     <|> try (parens parseExp)
-    <|> parseOp
-    <|> parseVar
-    <|> parseInt
-    <|> parseStrConst
+    <|> try parseOp
+    <|> try parseVar
+    <|> try parseInt
+    <|> try parseStrConst
     <?> "exp"
