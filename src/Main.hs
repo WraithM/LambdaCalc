@@ -1,9 +1,6 @@
 module Main where
 
 import System.Environment (getArgs)
-
-import Text.Parsec (parse, newline)
-import Text.Parsec.Combinator
 import Text.Parsec.String (parseFromFile)
 
 import Ast
@@ -13,7 +10,7 @@ import Parser
 -- | Parse a file with assignments at the top-level
 parseFile :: FilePath -> IO [Assign]
 parseFile filename = do
-    result <- parseFromFile parseAssignments filename
+    result <- parseFromFile pAssignments filename
     case result of
         Left err -> do
             print err
@@ -28,4 +25,4 @@ getFirstArg = do
         x:_ -> return x
 
 main :: IO ()
-main = getFirstArg >>= parseFile >>= mapM_ print
+main = getFirstArg >>= parseFile >>= \as -> print . show $ evalMain as

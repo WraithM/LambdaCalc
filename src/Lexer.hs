@@ -1,11 +1,7 @@
 module Lexer where
 
--- import Data.List (foldl')
--- import Control.Applicative ((<$>),(<*>))
-
 import Text.Parsec
 import Text.Parsec.Char
-import Text.Parsec.Combinator
 import Text.Parsec.String (Parser)
 import Text.Parsec.Language (emptyDef)
 import qualified Text.Parsec.Token as T
@@ -33,6 +29,7 @@ operator   = T.operator lexer
 reservedOp = T.reservedOp lexer
 whitespace = T.whiteSpace lexer
 dot        = T.dot lexer
+semi       = T.semi lexer
 
 lambda = reservedOp "\\"
 equals = reservedOp "="

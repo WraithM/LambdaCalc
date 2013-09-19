@@ -1,3 +1,4 @@
-main = (\x. x)
+main = (\x. x) 5
+;
 
-test = (\x. b)
+test = (\x. b);

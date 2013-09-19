@@ -1,48 +1,46 @@
 module Parser where
 
 import Data.List (foldl')
-import Control.Applicative ((<$>),(<*>))
+import Control.Applicative ((<$>))
 
 import Text.Parsec
-import Text.Parsec.Char
 import Text.Parsec.Combinator
 import Text.Parsec.String (Parser)
-import Text.Parsec.Language (emptyDef)
-import qualified Text.Parsec.Token as T
+import qualified Text.Parsec.Expr as E
 
+import Lexer
 import Ast
 
-lambdaDef = emptyDef
-    { T.commentStart    = "{-"
-    , T.commentEnd      = "-}"
-    , T.commentLine     = "--"
-    , T.nestedComments  = True
-    , T.identStart      = letter
-    , T.identLetter     = alphaNum <|> oneOf "_'"
-    , T.opStart         = T.opLetter lambdaDef
-    , T.opLetter        = oneOf "=+*-/@\\"
-    }
+pVar :: Parser Exp
+pVar = Var <$> identifier <?> "Var"
 
-lexer = T.makeTokenParser lambdaDef
+pInt :: Parser Exp
+pInt = IntConst <$> integer <?> "Int"
+   
+pStrConst :: Parser Exp
+pStrConst = StrConst <$> strLiteral
+    <?> "strconst"
+    
+makeLambda :: [String] -> Exp -> Exp
+makeLambda xs e = foldl' (flip Abs) e (reverse xs)
 
-parens     = T.parens lexer
-identifier = T.identifier lexer
-reserved   = T.reserved lexer
-integer    = T.integer lexer
-strLiteral = T.stringLiteral lexer
-operator   = T.operator lexer
-reservedOp = T.reservedOp lexer
-whitespace = T.whiteSpace lexer
-dot        = T.dot lexer
-
-lambda = reservedOp "\\"
-equals = reservedOp "="
-
-parseVar :: Parser Exp
-parseVar = Var <$> identifier
-
-parseInt :: Parser Exp
-parseInt = IntConst <$> integer
+pLambda :: Parser Exp
+pLambda = do
+    lambda
+    xs <- many1 identifier
+    dot
+    e <- pExp
+    return $ makeLambda xs e
+    <?> "lambda"
+    
+   
+pFactor :: Parser Exp
+pFactor = parens pExp
+    <|> pVar
+    <|> pInt
+    <|> pStrConst
+    <|> pLambda
+    <?> "factor"
 
 opDict :: [(String, Op)]
 opDict =
@@ -52,71 +50,36 @@ opDict =
     , ("/", Div)
     , ("@", Cat)
     ]
-    
--- Still having some trouble
-parseOp :: Parser Exp
-parseOp = do
-    e1 <- parseExp
-    opName <- operator
-    e2 <- parseExp
-    case lookup opName opDict of
-        Just op -> return $ BinOp op e1 e2
-        Nothing -> error "Cannot parse BinOp"
-    <?> "binop"
+ 
+pTerm :: Parser Exp
+pTerm = E.buildExpressionParser table pFactor <?> "term"
+  where infixOp x = E.Infix (reservedOp x >> return (\e1 e2 -> 
+            case lookup x opDict of
+                Nothing -> error "Can't find operator"
+                Just op -> BinOp op e1 e2))
+        table =
+            [ [ infixOp "*" E.AssocLeft ]
+            , [ infixOp "/" E.AssocNone ]
+            , [ infixOp "+" E.AssocLeft, infixOp "@" E.AssocLeft ]
+            , [ infixOp "-" E.AssocNone ]
+            ]
 
-parseStrConst :: Parser Exp
-parseStrConst = do
-    str <- strLiteral
-    return (StrConst str)
-    <?> "strconst"
-    
--- Problem exists here: spaceSep includes \n as a space
-spaceSep :: Parser a -> Parser [a]
-spaceSep p = (:) <$> p <*> many (try (spaces' >> p))
-  where spaces' = skipMany (skipMany1 (satisfy isSpace))
-        isSpace c = c == ' ' || c == '\t'
+pExp :: Parser Exp
+pExp = foldl1 App <$> many1 pTerm
+    <?> "exp"
 
-makeLambda :: [String] -> Exp -> Exp
-makeLambda xs e = foldl' (flip Abs) e (reverse xs)
-
-parseLambda :: Parser Exp
-parseLambda = do
-    lambda
-    xs <- spaceSep identifier
-    dot
-    e <- parseExp
-    return $ makeLambda xs e
-    <?> "lambda"
-    
-parseApp :: Parser Exp
-parseApp = do
-    tlist <- spaceSep term
-    return $ case tlist of
-        [t] -> t
-        t:ts -> foldl' App t ts
-    <?> "application"
-  where
-    term = choice [ parseInt, parseStrConst ] <|> (parseVar <|> parseLambda <|> parens term)
-
-parseAssign :: Parser Assign
-parseAssign = do
+pAssign :: Parser Assign
+pAssign = do
     name <- identifier
-    whitespace
     equals
-    whitespace
-    e <- parseExp
+    e <- pExp
     return (name, e)
     <?> "assignment"
-    
-parseAssignments :: Parser [Assign]
-parseAssignments = parseAssign `sepEndBy` whitespace
-    
-parseExp :: Parser Exp
-parseExp = try parseApp
-    <|> try parseLambda
-    <|> try (parens parseExp)
-    <|> try parseOp
-    <|> try parseVar
-    <|> try parseInt
-    <|> try parseStrConst
-    <?> "exp"
+
+pAssignments :: Parser [Assign]
+pAssignments = pAssign `sepEndBy` semi
+    <?> "assignments"
+
+parseExp t = case parse (allOf pAssignments) "" t of
+    Left err -> error $ show err
+    Right asgn -> asgn
