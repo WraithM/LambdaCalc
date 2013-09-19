@@ -33,9 +33,8 @@ pLambda = do
     return $ makeLambda xs e
     <?> "lambda"
     
-   
 pFactor :: Parser Exp
-pFactor = parens pExp
+pFactor = Parens <$> parens pExp
     <|> pVar
     <|> pInt
     <|> pStrConst

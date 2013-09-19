@@ -35,6 +35,7 @@ eval (BinOp op e1 e2) = applyOp op e1 e2
 eval (Var x) = Var x
 eval (IntConst i) = IntConst i
 eval (StrConst s) = StrConst s
+eval (Parens e) = eval e
 eval (Abs x e) = Abs x e
 eval (App (Abs x e) arg) = eval (substitute arg x e)
 eval e = error ("Eval: Cannot eval " ++ show e)
@@ -43,6 +44,7 @@ eval e = error ("Eval: Cannot eval " ++ show e)
 substitute :: Exp -> String -> Exp -> Exp
 substitute arg x (Var y) = if x == y then arg else Var y
 substitute arg x (BinOp op e1 e2) = BinOp op (substitute arg x e1) (substitute arg x e2)
+substitute arg x (Parens e) = substitute arg x e
 substitute arg x (Abs y e) 
     | x == y = Abs y e
     | otherwise = Abs y (substitute arg x e)
@@ -51,6 +53,7 @@ substitute _ _ e = e
 
 -- | Get a list of variable names in an expression. I should get only free variables.
 getVars :: Exp -> [String]
+getVars (Parens e) = getVars e
 getVars (Var x) = [x]
 getVars (BinOp _ e1 e2) = getVars e1 ++ getVars e2
 getVars (IntConst _) = []

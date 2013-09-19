@@ -25,11 +25,13 @@ data Exp
     | IntConst Integer
     | StrConst String
     | Abs String Exp
+    | Parens Exp
     | App Exp Exp
     | BinOp Op Exp Exp
     deriving Eq
 
 instance Show Exp where
+    show (Parens e)     = "(" ++ show e ++ ")"
     show (Var s)        = s
     show (IntConst i)   = show i
     show (StrConst s)   = show s

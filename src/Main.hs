@@ -26,3 +26,4 @@ getFirstArg = do
 
 main :: IO ()
 main = getFirstArg >>= parseFile >>= (print . show . evalMain)
+-- main = getFirstArg >>= parseFile >>= mapM_ print
