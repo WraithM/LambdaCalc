@@ -37,18 +37,16 @@ eval (IntConst i) = IntConst i
 eval (StrConst s) = StrConst s
 eval (Abs x e) = Abs x e
 eval (App (Abs x e) arg) = eval (substitute arg x e)
-eval (Parens e) = eval e
 eval e = error ("Eval: Cannot eval " ++ show e)
 
 -- | Substitute an expression for a variable name in an expression
 substitute :: Exp -> String -> Exp -> Exp
-substitute arg x (BinOp op e1 e2) = BinOp op (substitute arg x e1) (substitute arg x e2)
 substitute arg x (Var y) = if x == y then arg else Var y
-substitute arg x (Abs y e)
-    | x == y = error $ "Cannot substitute: " ++ show x ++ " to " ++ show y
+substitute arg x (BinOp op e1 e2) = BinOp op (substitute arg x e1) (substitute arg x e2)
+substitute arg x (Abs y e) 
+    | x == y = Abs y e
     | otherwise = Abs y (substitute arg x e)
 substitute arg x (App e1 e2) = App (substitute arg x e1) (substitute arg x e2)
-substitute arg x (Parens e) = Parens (substitute arg x e)
 substitute _ _ e = e
 
 -- | Get a list of variable names in an expression. I should get only free variables.
@@ -59,7 +57,6 @@ getVars (IntConst _) = []
 getVars (StrConst _) = []
 getVars (Abs _ e) = getVars e
 getVars (App e1 e2) = getVars e1 ++ getVars e2
-getVars (Parens e) = getVars e
 
 -- | Given a set of assignments, evaluate the expression named "main"
 evalMain :: [Assign] -> Exp

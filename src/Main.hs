@@ -25,4 +25,4 @@ getFirstArg = do
         x:_ -> return x
 
 main :: IO ()
-main = getFirstArg >>= parseFile >>= \as -> print . show $ evalMain as
+main = getFirstArg >>= parseFile >>= (print . show . evalMain)
